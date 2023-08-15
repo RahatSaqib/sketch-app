@@ -112,7 +112,7 @@ const Canvas = ({
         /// close it and stroke it for demo
         ctx.closePath();
         ctx.strokeStyle = '#000';
-        ctx.stroke();
+        fillColor ? ctx.fill() : ctx.stroke();
     }
 
     const drawRect = (e) => {
@@ -162,7 +162,6 @@ const Canvas = ({
             points: [],
             closed: false,
             addPoint(p) {
-                console.log(this.points)
                 this.points.push(point(p.x, p.y))
             },
             draw() {
@@ -217,9 +216,9 @@ const Canvas = ({
             cursor = "crosshair";
             canvas.style.cursor = cursor;
 
-            if (!dragging) { 
+            if (!dragging) {
                 activePoint = polygon.closest(mouse)
-             }
+            }
             if (activePoint === undefined && mouse.button) {
                 polygon.addPoint(mouse);
                 mouse.button = false;
@@ -349,7 +348,7 @@ const Canvas = ({
             height: "800px"
         }}>
             <button className='undo-canvas' onClick={undoDraw}>Undo</button>
-            <button className='undo-canvas' onClick={redoDraw}>Redo</button>
+            <button className='redo-canvas' onClick={redoDraw}>Redo</button>
             <canvas
                 width={width}
                 height={height}
