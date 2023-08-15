@@ -14,7 +14,6 @@ function App() {
   const [saveCanvas, setSaveCanvas] = useState('no')
   const [undoArray , setUndoArray] = useState([])
   const [redoArray , setRedoArray] = useState([])
-  const [coordinates , setCoordinates] = useState([])
 
   function toolChangeClicked(e, tool) {
     // removing active class from the previous option and adding on current clicked option
@@ -50,9 +49,9 @@ function App() {
                 <img src="icons/circle.svg" alt="" />
                 <span>Circle</span>
               </li>
-              <li className="option tool" id="triangle" onClick={(e) => toolChangeClicked(e, 'triangle')} >
-                <img src="icons/triangle.svg" alt="" />
-                <span>Triangle</span>
+              <li className="option tool" id="eclipse" onClick={(e) => toolChangeClicked(e, 'eclipse')} >
+                <img src="icons/oval.svg" alt="" />
+                <span>Eclipse</span>
               </li>
               <li className="option tool" id="straight-line" onClick={(e) => toolChangeClicked(e, 'straight-line')} >
                 <img src="icons/straight.svg" alt="" />
@@ -113,8 +112,6 @@ function App() {
             setUndoArray={setUndoArray} 
             redoArray={redoArray}
             setRedoArray={setRedoArray}
-            coordinates={coordinates}
-            setCoordinates={setCoordinates}
           ></Canvas>
         </section>
       </div>

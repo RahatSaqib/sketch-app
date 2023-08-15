@@ -13,9 +13,7 @@ const Canvas = ({
     undoArray,
     redoArray,
     setRedoArray,
-    setUndoArray,
-    coordinates,
-    setCoordinates
+    setUndoArray
 }) => {
 
     const canvasRef = useRef(null);
@@ -26,6 +24,9 @@ const Canvas = ({
     // let coordinates = []
     // global variables with default value
     let prevMouseX, prevMouseY, snapshot, startX, startY, mouseX, mouseY
+    let activePoint, cursor, dragging = false;
+    const mouse = { x: 0, y: 0, button: 0, lx: 0, ly: 0, update: true };
+
     const startDraw = (e) => {
         isDrawingRef.current = true;
         prevMouseX = e.nativeEvent.offsetX; // passing current mouseX position as prevMouseX value
@@ -37,11 +38,16 @@ const Canvas = ({
         // copying canvas data & passing as snapshot value.. this avoids dragging the image
         startX = e.nativeEvent.clientX - bounds.left;
         startY = e.nativeEvent.clientY - bounds.top;
-        if (coordinates.length < 10) {
-            coordinates.push({ x: startX, y: startY })
-            setCoordinates(coordinates)
-        }
         snapshot = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+        if (selectedTool === "polygon") {
+            mouse.x = e.pageX - bounds.left;
+            mouse.y = e.pageY - bounds.top;
+            // mouse.button = false
+            mouse.update = true;
+            mouse.button = true
+            requestAnimationFrame(drawPolygon)
+            // drawPolygon(e);
+        }
     }
 
     const drawing = (e) => {
@@ -61,14 +67,54 @@ const Canvas = ({
             mouseX = e.nativeEvent.clientX - bounds.left;
             mouseY = e.nativeEvent.clientY - bounds.top;
             drawStraightLine(e);
-        } else if (selectedTool === "polygon") {
-            drawPolygon(e);
         } else if (selectedTool === "circle") {
             drawCircle(e);
-        } else {
+        } else if (selectedTool === 'triangle') {
             drawTriangle(e);
         }
+        else if (selectedTool === "polygon") {
+            mouse.x = e.pageX - bounds.left;
+            mouse.y = e.pageY - bounds.top;
+            mouse.update = true;
+        }
+        else if (selectedTool == 'eclipse') {
+
+            let x2 = e.clientX - bounds.left
+            let y2 = e.clientY - bounds.top
+
+            /// draw ellipse
+            drawEllipse(startX, startY, x2, y2);
+        }
     }
+    function drawEllipse(x1, y1, x2, y2) {
+
+        var radiusX = (x2 - x1) * 0.5,   /// radius for x based on input
+            radiusY = (y2 - y1) * 0.5,   /// radius for y based on input
+            centerX = x1 + radiusX,      /// calc center
+            centerY = y1 + radiusY,
+            step = 0.01,                 /// resolution of ellipse
+            a = step,                    /// counter
+            pi2 = Math.PI * 2 - step;    /// end angle
+
+        /// start a new path
+        ctx.beginPath();
+
+        /// set start point at angle 0
+        ctx.moveTo(centerX + radiusX * Math.cos(0),
+            centerY + radiusY * Math.sin(0));
+
+        /// create the ellipse    
+        for (; a < pi2; a += step) {
+            ctx.lineTo(centerX + radiusX * Math.cos(a),
+                centerY + radiusY * Math.sin(a));
+        }
+
+        /// close it and stroke it for demo
+        ctx.closePath();
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+    }
+
     const drawRect = (e) => {
         // if fillColor isn't checked draw a rect with border else draw rect with background
         if (!fillColor) {
@@ -111,17 +157,97 @@ const Canvas = ({
         ctx.closePath(); // closing path of a triangle so the third line draw automatically
         fillColor ? ctx.fill() : ctx.stroke(); // if fillColor is checked fill triangle else draw border
     }
+    function poly() {
+        return ({
+            points: [],
+            closed: false,
+            addPoint(p) {
+                console.log(this.points)
+                this.points.push(point(p.x, p.y))
+            },
+            draw() {
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = selectedColor;
+                ctx.fillStyle = selectedColor;
+                ctx.beginPath();
+                for (const p of this.points) { ctx.lineTo(p.x, p.y) }
+                this.closed && ctx.closePath();
+                ctx.stroke();
+                this.closed && fillColor ? ctx.fill() : ctx.stroke();;
 
-    function drawPolygon(e) {
-        const canvas = canvasRef.current;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                for (const p of this.points) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x + 10, p.y);
+                    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
+            closest(pos, dist = 8) {
+                var i = 0, index = -1;
+                dist *= dist;
+                for (const p of this.points) {
+                    var x = pos.x - p.x;
+                    var y = pos.y - p.y;
+                    var d2 = x * x + y * y;
+                    if (d2 < dist) {
+                        dist = d2;
+                        index = i;
+                    }
+                    i++;
+                }
+                if (index > -1) { return this.points[index] }
+            }
+        });
+    }
+    const point = (x, y) => ({ x, y });
+
+    function drawCircle2(pos, color = "black", size = 8) {
+        ctx.strokeStyle = color;
         ctx.beginPath();
-        ctx.moveTo(coordinates[0].x, coordinates[0].y);
-        for (let index = 1; index < coordinates.length; index++) {
-            ctx.lineTo(coordinates[index].x, coordinates[index].y);
-        }
-        ctx.closePath();
+        ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
         ctx.stroke();
+    }
+    const polygon = poly();
+    function drawPolygon() {
+        const canvas = canvasRef.current;
+        if (mouse.update) {
+            cursor = "crosshair";
+            canvas.style.cursor = cursor;
+
+            if (!dragging) { 
+                activePoint = polygon.closest(mouse)
+             }
+            if (activePoint === undefined && mouse.button) {
+                polygon.addPoint(mouse);
+                mouse.button = false;
+            } else if (activePoint) {
+                if (mouse.button) {
+                    if (dragging) {
+                        activePoint.x += mouse.x - mouse.lx;
+                        activePoint.y += mouse.y - mouse.ly;
+                    } else {
+                        if (!polygon.closed && polygon.points.length > 2 && activePoint === polygon.points[0]) {
+                            polygon.closed = true;
+                        }
+                        dragging = true
+                    }
+                } else { dragging = false }
+            }
+            polygon.draw();
+            if (activePoint) {
+                drawCircle2(activePoint);
+                cursor = "move";
+            }
+            mouse.lx = mouse.x;
+            mouse.ly = mouse.y;
+            canvas.style.cursor = cursor;
+            mouse.update = false;
+        }
+        requestAnimationFrame(drawPolygon)
+
     }
 
     function undoDraw() {
@@ -158,7 +284,11 @@ const Canvas = ({
         setRedoArray([])
     }
 
-    const stopDraw = () => {
+    const stopDraw = (e) => {
+        mouse.x = e.pageX - bounds.left;
+        mouse.y = e.pageY - bounds.top;
+        mouse.button = false
+        mouse.update = true
         if (isDrawingRef.current) {
 
             ctx.stroke()
