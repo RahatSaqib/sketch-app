@@ -173,14 +173,14 @@ const Canvas = ({
                 for (const p of this.points) { ctx.lineTo(p.x, p.y) }
                 this.closed && ctx.closePath();
                 ctx.stroke();
-                this.closed && fillColor ? ctx.fill() : ctx.stroke();;
+                this.closed && fillColor ? ctx.fill() : ctx.stroke();
 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
                 for (const p of this.points) {
                     ctx.beginPath();
                     ctx.moveTo(p.x + 10, p.y);
-                    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.stroke();
                 }
@@ -216,7 +216,7 @@ const Canvas = ({
         if (mouse.update) {
             cursor = "crosshair";
             canvas.style.cursor = cursor;
-
+            ctx.clearRect(0,0,canvas.width,canvas.height);
             if (!dragging) { 
                 activePoint = polygon.closest(mouse)
              }
