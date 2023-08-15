@@ -11,7 +11,7 @@ body{
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #4A98F7;
+  background: #6dcac8;
 }
 .container{
   display: flex;
@@ -138,11 +138,26 @@ section{
 }
 
 .undo-canvas{
-  color: #6C757D;
+  height: 40px;
+  width: 70px;
+  margin: 5px;
+  color: #ffffff;
+  background-color: #E02020;
   border: 1px solid #6C757D;
   transition: all 0.3s ease;
 }
-.undo-canvas:hover{
+
+.redo-canvas{
+  height: 40px;
+  width: 70px;
+  margin: 5px;
+  color: #ffffff;
+  background-color: #10781e;
+  border: 1px solid #6C757D;
+  transition: all 0.3s ease;
+}
+
+.redo-canvas:hover{
   color: #000000;
   background: #6C757D;
 }
